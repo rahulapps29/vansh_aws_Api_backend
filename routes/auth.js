@@ -4,7 +4,7 @@ require("dotenv").config();
 
 const router = express.Router();
 
-// ✅ Redirect user to Amazon login page
+// ✅ Route for Login with Amazon
 router.get("/login", (req, res) => {
   const amazonAuthUrl = `${process.env.AMAZON_AUTH_URL}?client_id=${
     process.env.LWA_CLIENT_ID
@@ -14,7 +14,6 @@ router.get("/login", (req, res) => {
   res.redirect(amazonAuthUrl);
 });
 
-// ✅ Handle OAuth callback from Amazon
 router.get("/callback", async (req, res) => {
   const authCode = req.query.code;
   if (!authCode)
@@ -38,22 +37,18 @@ router.get("/callback", async (req, res) => {
     // Store refresh_token in HTTP-only cookie
     res.cookie("refresh_token", refresh_token, { httpOnly: true });
 
-    // ✅ Redirect user to frontend with access_token
-    res.redirect(
-      `${process.env.FRONTEND_URL}/auth/callback?access_token=${access_token}`
-    );
+    // ✅ Send token as JSON response instead of redirecting
+    res.json({ access_token });
   } catch (error) {
     console.error(
       "Error exchanging code for token:",
       error.response?.data || error.message
     );
-    res
-      .status(500)
-      .json({
-        error: "Authentication failed",
-        details: error.response?.data || error.message,
-      });
+    res.status(500).json({
+      error: "Authentication failed",
+      details: error.response?.data || error.message,
+    });
   }
 });
 
-module.exports = router; // ✅ Export router
+module.exports = router;
